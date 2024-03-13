@@ -13,7 +13,12 @@
     <version>3.2.1</version>
   </parent>
   <name>petclinic</name>
-
+  <distributionManagement>
+   <snapshotRepository>
+      <id>nexus-snapshots</id>
+      <url>http://localhost:51208/nexus/content/repositories/snapshots</url>
+   </snapshotRepository>
+</distributionManagement>
   <properties>
 
     <!-- Generic properties -->
@@ -266,7 +271,35 @@
           <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
         </configuration>
       </plugin>
+        <plugin>
+   <groupId>org.apache.maven.plugins</groupId>
+   <artifactId>maven-deploy-plugin</artifactId>
+   <version>${maven-deploy-plugin.version}</version>
+   <configuration>
+      <skip>true</skip>
+   </configuration>
+</plugin>
 
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nxrm3-maven-plugin</artifactId>
+        <!-- replace plugin version with the latest available -->
+        <!-- https://search.maven.org/search?q=a:nxrm3-maven-plugin -->
+        <version>1.0.3</version>
+        <extensions>true</extensions>
+        <configuration>
+          <nexusUrl>http://localhost:51208</nexusUrl>
+          
+          <!-- The server "id" element from settings to use authentication from settings.xml-->
+          <serverId>local-nexus</serverId>
+          
+          <!-- Which repository to deploy to -->
+          <repository>maven-releases</repository>
+          
+          <!-- Skip the staging deploy mojo -->
+          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 

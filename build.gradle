@@ -5,6 +5,8 @@ plugins {
   id 'org.graalvm.buildtools.native' version '0.9.28'
   id 'io.spring.javaformat' version '0.0.41'
   id "io.spring.nohttp" version "0.0.11"
+  id 'pl.allegro.tech.build.axion-release' version '1.15.1'
+
 }
 
 apply plugin: 'java'
@@ -14,7 +16,7 @@ apply plugin: 'io.spring.javaformat'
 gradle.startParameter.excludedTaskNames += [ "checkFormatAot", "checkFormatAotTest" ]
 
 group = 'org.springframework.samples'
-version = '3.2.0'
+version = scmVersion.version
 
 java {
   sourceCompatibility = JavaVersion.VERSION_17
@@ -55,7 +57,13 @@ dependencies {
 tasks.named('test') {
   useJUnitPlatform()
 }
-
+task myTask() {
+    doLast {
+      exec {
+        commandLine 'open', 'build/reports/tests/test/index.html'
+      }
+    }
+}
 checkstyle {
   configDirectory = project.file('src/checkstyle')
   configFile = file('src/checkstyle/nohttp-checkstyle.xml')
@@ -68,7 +76,7 @@ checkstyleNohttp {
 
 tasks.named("formatMain").configure { dependsOn("checkstyleMain") }
 tasks.named("formatMain").configure { dependsOn("checkstyleNohttp") }
-
+tasks.named("myTask").configure {dependsOn("build")}
 tasks.named("formatTest").configure { dependsOn("checkstyleTest") }
 tasks.named("formatTest").configure { dependsOn("checkstyleNohttp") }
 
