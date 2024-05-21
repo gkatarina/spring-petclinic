@@ -13,12 +13,7 @@
     <version>3.2.1</version>
   </parent>
   <name>petclinic</name>
-  <distributionManagement>
-   <snapshotRepository>
-      <id>nexus-snapshots</id>
-      <url>http://localhost:51208/nexus/content/repositories/snapshots</url>
-   </snapshotRepository>
-</distributionManagement>
+
   <properties>
 
     <!-- Generic properties -->
@@ -41,6 +36,19 @@
     <spring-format.version>0.0.40</spring-format.version>
 
   </properties>
+
+  <dependencyManagement>
+      <dependencies>
+        <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>spring-cloud-gcp-dependencies</artifactId>
+        <version>4.1.4</version>
+        <type>pom</type>
+        <scope>import</scope>
+        </dependency>
+    </dependencies>
+  </dependencyManagement>
+
 
   <dependencies>
     <!-- Spring and Spring Boot dependencies -->
@@ -75,6 +83,11 @@
     </dependency>
 
     <!-- Databases - Uses H2 by default -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>spring-cloud-gcp-starter-sql-mysql</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
@@ -203,12 +216,10 @@
             <phase>validate</phase>
             <configuration>
               <configLocation>src/checkstyle/nohttp-checkstyle.xml</configLocation>
+              <suppressionsLocation>src/checkstyle/nohttp-checkstyle-suppressions.xml</suppressionsLocation>
               <sourceDirectories>${basedir}</sourceDirectories>
               <includes>**/*</includes>
               <excludes>**/.git/**/*,**/.idea/**/*,**/target/**/,**/.flattened-pom.xml,**/*.class</excludes>
-              <propertyExpansion>
-                config_loc=${basedir}/src/checkstyle/
-              </propertyExpansion>
             </configuration>
             <goals>
               <goal>check</goal>
@@ -271,35 +282,7 @@
           <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
         </configuration>
       </plugin>
-        <plugin>
-   <groupId>org.apache.maven.plugins</groupId>
-   <artifactId>maven-deploy-plugin</artifactId>
-   <version>${maven-deploy-plugin.version}</version>
-   <configuration>
-      <skip>true</skip>
-   </configuration>
-</plugin>
 
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nxrm3-maven-plugin</artifactId>
-        <!-- replace plugin version with the latest available -->
-        <!-- https://search.maven.org/search?q=a:nxrm3-maven-plugin -->
-        <version>1.0.3</version>
-        <extensions>true</extensions>
-        <configuration>
-          <nexusUrl>http://localhost:51208</nexusUrl>
-          
-          <!-- The server "id" element from settings to use authentication from settings.xml-->
-          <serverId>local-nexus</serverId>
-          
-          <!-- Which repository to deploy to -->
-          <repository>maven-releases</repository>
-          
-          <!-- Skip the staging deploy mojo -->
-          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
