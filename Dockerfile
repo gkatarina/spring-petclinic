@@ -30,6 +30,20 @@ COPY . /spring-petclinic
 CMD ["./mvnw", "package"]
 
 FROM eclipse-temurin:17-jdk-jammy as development
+#db name
+ARG DB
+#password
+ARG DB_P 
+#user
+ARG DB_U
+#connection name
+ARG DB_CONN
+
+ENV DB_NAME=$DB
+ENV DB_PASSWORD=$DB_P
+ENV DB_USER=$DB_U
+ENV DB_CONNECTION_NAME=$DB_CONN
+
 EXPOSE 8080
 COPY --from=build /spring-petclinic/target/spring-petclinic-3.2.0-SNAPSHOT.jar .
 CMD ["java","-jar","spring-petclinic-3.2.0-SNAPSHOT.jar"]

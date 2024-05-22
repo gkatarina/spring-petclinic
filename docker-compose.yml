@@ -7,11 +7,11 @@ services:
       dockerfile: Dockerfile 
       target: development
     ports:
-      - 80:8080
-      # - 8000:8000
+      - 8080:8080
+      - 8000:8000
     environment:
       - SERVER_PORT=8080
-      - MYSQL_URL=do
+      - MYSQL_URL=jdbc:mysql://mysqlserver/petclinic
     volumes:
       - ./:/app
     depends_on:
@@ -19,20 +19,20 @@ services:
   mysqlserver:
     image: mysql:8.2
     ports:
-      - "3306:3306"
+      - 3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=
       - MYSQL_ALLOW_EMPTY_PASSWORD=true
       - MYSQL_USER=petclinic
       - MYSQL_PASSWORD=petclinic
       - MYSQL_DATABASE=petclinic
-      - GOOGLE_APPLICATION_CREDENTIALS: ../Documents/terraform/key.json
+      # - GOOGLE_APPLICATION_CREDENTIALS: ../Documents/terraform/key.json
     volumes:
       - mysql_data:/var/lib/mysql
-      # - "./conf.d:/etc/mysql/conf.d"
+      - mysql_config:/etc/mysql/conf.d
       
     # Inject your specific service account keyfile into the container at runtime.
-      - ../Documents/terraform/key.json:/tmp/keys/keyfile.json:ro
+    # - /path/to/my/local/folder/keyfile.json:/tmp/keys/keyfile.json:ro
     # profiles:
     #   - mysqlserver
   # postgres:
