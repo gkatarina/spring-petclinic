@@ -62,8 +62,7 @@ version_and_tag:
   variables:
     GIT_CLEAN_FLAGS: none
   script:
-    - ls target
-    - sudo apt-get update
+ß    - sudo apt-get update
     - sudo apt-get install -y python3-semver
     - echo "$(python3 versioning.py)" > version.txt   
     - cat version.txt
