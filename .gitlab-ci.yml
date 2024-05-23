@@ -1,0 +1,134 @@
+stages:         
+  - checkstyle
+  - build
+  - push-artifact # build and push docker image to hub
+  - version_and_tag
+  - release
+  - deploy
+
+image: maven:3.8.5-openjdk-17
+
+checkstyle:
+  stage: checkstyle
+  tags:
+    - runner-apk
+  script:
+    - mvn checkstyle:checkstyle
+    - mvn pmd:pmd # programming mistake detector
+  artifacts:
+    reports:
+      codequality: target/site/checkstyle.html
+  only:
+    - merge_requests
+
+
+build-job:      
+  stage: build
+  tags:
+    - runner-apk
+  script:
+    - mvn clean package -DskipTests
+  
+  artifacts:
+    paths:
+      - target/*.jar
+
+  only:
+    - merge_requests
+
+
+push-artifact:     
+  stage: push-artifact  
+  image: docker:19.03.12
+  tags:
+    - runner-apk
+
+  before_script:
+    - echo "${CI_DOCKERHUB_PASSWORD:?}" | docker login --password-stdin -u "${CI_REGISTRY_USER:?}"
+
+  script:
+    - docker build -t "${CI_DOCKER_IMAGE_NAME:?}":"${CI_COMMIT_SHORT_SHA:?}" .
+    - docker push "${CI_DOCKER_IMAGE_NAME:?}":"${CI_COMMIT_SHORT_SHA:?}"
+    - echo "Image is successfully pushed to docker hub."
+  only:
+    - merge_requests
+  artifacts:
+    paths:
+      - target/*.jar
+
+version_and_tag:
+  stage: version_and_tag
+  image: python:3.9
+  variables:
+    GIT_CLEAN_FLAGS: none
+  script:
+    - ls target
+    - sudo apt-get update
+    - sudo apt-get install -y python3-semver
+    - echo "$(python3 versioning.py)" > version.txt   
+    - cat version.txt
+  artifacts:
+    paths:
+      - version.txt
+  only:
+    - main
+  tags:
+    - runner-apk
+
+release:
+  stage: release
+  image: docker:19.03.12
+  variables:
+    GIT_CLEAN_FLAGS: none
+
+  before_script:
+    - export TAG_VERSION=$(cat version.txt)
+    - echo "${CI_DOCKERHUB_PASSWORD:?}" | docker login --password-stdin -u "${CI_REGISTRY_USER:?}"
+  script:
+    - ls target
+    - cat version.txt
+    - apk add git
+    - git config --global user.email "${GIT_EMAIL:?}"
+    - git config --global user.name "${GIT_USERNAME:?}"
+    - docker build -t "${CI_DOCKER_IMAGE_NAME:?}":"${TAG_VERSION:?}" .
+    - docker push "${CI_DOCKER_IMAGE_NAME:?}":"${TAG_VERSION:?}"
+    - git tag -a "${TAG_VERSION:?}" -m "Release $TAG_VERSION"
+    - git push https://oauth2:$CI_JOB_TOKEN@gitlab.com/$GIT_USERNAME/$GIT_PROJECT.git "${TAG_VERSION:?}"
+
+  only:
+    - main
+  tags:
+    - runner-apk
+  dependencies:
+    - version_and_tag
+  artifacts:
+    paths:
+      - version.txt
+
+deploy:
+  stage: deploy
+  when: manual
+  image: google/cloud-sdk:latest
+  tags:
+    - runner-apk
+  before_script:
+    - export TAG_VERSION=$(cat version.txt)
+  script:
+    - gcloud auth activate-service-account --key-file=/Users/kgrbovic/Desktop/capstone/key.json
+    - gcloud config set compute/zone "us-central1-a"
+    - gcloud config set project "gd-gcp-internship-devops"
+    - INSTANCE_NAMES=$(gcloud compute instances list --filter="labels.mig-label=mig-capstone" --format="value(name)")
+    - |
+      for INSTANCE_NAME in $INSTANCE_NAMES; do
+        gcloud compute scp /Users/kgrbovic/Desktop/capstone/key.json kgrbovic@$INSTANCE_NAME:/Users/kgrbovic/ --project=gd-gcp-internship-devops --zone=us-central1-a
+        gcloud compute ssh kgrbovic@$INSTANCE_NAME --zone=us-central1-a --quiet --command="docker pull $CI_DOCKER_IMAGE_NAME:$TAG_VERSION; docker run -d --name test-container -p 80:8080 -e SPRING_PROFILES_ACTIVE=mysql -e GOOGLE_APPLICATION_CREDENTIALS=/Users/kgrbovic/Desktop/capstone/key.json -v /Users/kgrbovic/Desktop/capstone/key.json:/Users/kgrbovic/Desktop/capstone/key.json $CI_DOCKER_IMAGE_NAME:$TAG_VERSION;"
+      done
+  only:
+    - main
+  dependencies:
+    - release
+
+
+
+
+

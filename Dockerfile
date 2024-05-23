@@ -44,7 +44,7 @@ ENV DB_PASSWORD=$DB_P
 ENV DB_USER=$DB_U
 ENV DB_CONNECTION_NAME=$DB_CONN
 
-EXPOSE 8080
+# EXPOSE 8080
 COPY --from=build /spring-petclinic/target/spring-petclinic-3.2.0-SNAPSHOT.jar .
 CMD ["java","-jar","spring-petclinic-3.2.0-SNAPSHOT.jar"]
 
