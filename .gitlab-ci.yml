@@ -7,7 +7,7 @@ stages:
   - deploy
 
 image: maven:3.8.5-openjdk-17
-
+# 23
 checkstyle:
   stage: checkstyle
   tags:
