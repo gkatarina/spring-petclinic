@@ -114,14 +114,14 @@ deploy:
   before_script:
     - export TAG_VERSION=$(cat version.txt)
   script:
-    - gcloud auth activate-service-account --key-file=/Users/kgrbovic/Desktop/capstone/key.json
+    - gcloud auth activate-service-account --key-file=/Users/kgrbovic/Desktop/capstone/tf/key.json
     - gcloud config set compute/zone "us-central1-a"
     - gcloud config set project "gd-gcp-internship-devops"
-    - INSTANCE_NAMES=$(gcloud compute instances list --filter="labels.mig-label=mig-capstone" --format="value(name)")
+    - INSTANCE_NAMES=$(gcloud compute instances list --filter="labels.mig-label=capstone-mig" --format="value(name)")
     - |
       for INSTANCE_NAME in $INSTANCE_NAMES; do
-        gcloud compute scp /Users/kgrbovic/Desktop/capstone/key.json kgrbovic@$INSTANCE_NAME:/Users/kgrbovic/ --project=gd-gcp-internship-devops --zone=us-central1-a
-        gcloud compute ssh kgrbovic@$INSTANCE_NAME --zone=us-central1-a --quiet --command="docker pull $CI_DOCKER_IMAGE_NAME:$TAG_VERSION; docker run -d --name test-container -p 80:8080 -e SPRING_PROFILES_ACTIVE=mysql -e GOOGLE_APPLICATION_CREDENTIALS=/Users/kgrbovic/Desktop/capstone/key.json -v /Users/kgrbovic/Desktop/capstone/key.json:/Users/kgrbovic/Desktop/capstone/key.json $CI_DOCKER_IMAGE_NAME:$TAG_VERSION;"
+        gcloud compute scp /Users/kgrbovic/Desktop/capstone/tf/key.json kgrbovic@$INSTANCE_NAME:/Users/kgrbovic/ --project=gd-gcp-internship-devops --zone=us-central1-a
+        gcloud compute ssh kgrbovic@$INSTANCE_NAME --zone=us-central1-a --quiet --command="docker pull $CI_DOCKER_IMAGE_NAME:$TAG_VERSION; docker run -d --name test-container -p 80:8080 -e SPRING_PROFILES_ACTIVE=mysql -e GOOGLE_APPLICATION_CREDENTIALS=/Users/kgrbovic/Desktop/capstone/tf/key.json -v /Users/kgrbovic/Desktop/capstone/tf/key.json:/Users/kgrbovic/Desktop/capstone/tf/key.json $CI_DOCKER_IMAGE_NAME:$TAG_VERSION;"
       done
   only:
     - main
